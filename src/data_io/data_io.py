@@ -12,15 +12,10 @@ Rewritten some of the functions specific to Forests2020 potential biomass work
 This file contains the definition of some useful functions
 for the pantrop-AGB-LUH work
 """
-
-import xarray as xr #xarray to read all types of formats
-from affine import Affine
-import glob
 import numpy as np
-import sys
-import set_training_areas
+import glob
+import xarray as xr #xarray to read all types of formats
 import rasterio
-from copy import deepcopy
 
 """
 load_predictors
