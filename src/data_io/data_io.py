@@ -40,7 +40,10 @@ which case the path2root is simply "../"
 The function returns two objects:
     1) predictors: a large 2D numpy array where the rows correspond with land
        pixels and the columns correspond with each successive data set.
-    2) landmask: a boolian array which dimensions (n_latitude,n_longitude)
+    2) agb: a large 1D numpy array with the AGB estimate for each land pixel.
+       Note that the pixel order matches the pixel order in the predictors
+       array.
+    3) landmask: a boolian array which dimensions (n_latitude,n_longitude)
        where land pixels are marked by ones, and water bodies/nodata pixels
        are marked by zeros
 """
@@ -111,4 +114,6 @@ def load_predictors(path2root = "../"):
         counter += 1
     print('Extracted WorldClim2 and SOILGRIDS data')
 
-    return(predictors,landmask)
+    agb_out = agb.values[landmask]
+
+    return(predictors,agb_out,landmask)
