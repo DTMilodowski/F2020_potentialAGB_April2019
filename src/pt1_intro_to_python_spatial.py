@@ -154,7 +154,6 @@ WorldClim2 climatology (http://www.worldclim.org/bioclim):
             BIO18 = Precipitation of Warmest Quarter
             BIO19 = Precipitation of Coldest Quarter
 
-
 SoilGrids data (https://soilgrids.org/):
     filename = '../data/soils/'
     where ? refers to one of the following files:
@@ -192,7 +191,7 @@ Hinterland forest extent (https://glad.umd.edu/dataset/hinterland-forests-2013)
 ESACCI landcover (https://maps.elie.ucl.ac.be/CCI/viewer/)
     filename = '../data/landcover/colombia-ESACCI-LC-L4-LCCS-Map-P1Y-????-v2.0.7-2km-mode-lccs-class_2km.tif'
     where ??? refers to a year between 1992 and 2015
-    
+
 Note that the landcover data is coded by integer values uniqueto each of the
 ESA-CCI landcover classes. Don't worry about this for now, as it is dealt with
 elsewhere in the code. Forest classes are between XXX and XXX
