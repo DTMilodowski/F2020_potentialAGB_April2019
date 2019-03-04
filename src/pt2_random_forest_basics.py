@@ -27,29 +27,97 @@ interested, you are welcome to browse this at your leisure.
 import numpy as np                  # standard package for scientific computing
 import xarray as xr                 # xarray geospatial package
 import matplotlib.pyplot as plt     # plotting package
-import seaborn as sns               # another useful plotting package
-sns.set()                           # set some nice default plotting options
+#import seaborn as sns               # another useful plotting package
+#sns.set()                           # set some nice default plotting options
 
 # Import some parts of the scikit-learn library
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-
+from sklearn.linear_model import LinearRegression
 
 # Import custom libaries
-
+"""
 import sys
 sys.path.append('./random_forest/')
 import cal_val as cv                # a set of functions to help with calibration and validation
 import random_forest as rf          # a set of functions to help fit and interpret random forest models
-
+"""
 """
 #===============================================================================
 PART A: FITTING SIMPLE RANDOM FOREST REGRESSION MODELS
 A toy example; comparing random forest regression and linear regression models
 #-------------------------------------------------------------------------------
 """
-#X=
-#y=
+X = np.random.random(500)*10. # generate a set of random numbers between 0 and 10
+y1= 2.3*X + np.random.randn(500)*1. # generate a linear relationship with some noise - here noise comes from a random distribution with mean 0 and standard deviation of 1.
+y2= np.cos(X**0.5*5)+0.2*X + np.random.randn(500)*0.3 # a more complex nonlinear function
+# Finally, lets make a version of y1 where we have gaps at the start, end and
+# middle of the dataset. Don't worry about the details for now
+temp = X.copy()
+temp[X<1.7] = np.nan; temp[X>9.5]=np.nan; temp[np.all((X>3.4,X<6.5),axis=0)]=np.nan
+X3 = X[np.isfinite(temp)]
+y3=y1[np.isfinite(temp)]
+
+# Let's just plot up these trial datsets so we can see what we are dealing with
+#sns.set_style("darkgrid")
+#sns.set_style("ticks")
+#sns.despine()
+fig1,axes = plt.subplots(nrows=1,ncols=3,figsize = (8,3))
+axes[0].plot(X,y1,'.')
+axes[1].plot(X,y2,'.')
+axes[2].plot(X3,y3,'.')
+axes[0].set_xlim((0,10));axes[0].set_ylim((-5,28))
+axes[2].set_xlim((0,10));axes[2].set_ylim((-5,28))
+fig1.tight_layout()
+fig1.show()
+
+# Now lets fit a very simple random forest regression model to this data
+X=X.reshape(-1, 1)
+X3=X3.reshape(-1, 1)
+X_test = np.arange(0,10,0.1).reshape(-1, 1)
+rf1 = RandomForestRegressor()
+rf1.fit(X,y1)
+rf2 = RandomForestRegressor()
+rf2.fit(X,y2)
+rf3 = RandomForestRegressor()
+rf3.fit(X3,y3)
+y1_test = rf1.predict(X_test)
+y2_test = rf2.predict(X_test)
+y3_test = rf3.predict(X_test)
+
+# for comparison, plot linear regression for cases 1 and 3
+lm1 = LinearRegression()
+lm3 = LinearRegression()
+lm1.fit(X,y1)
+lm3.fit(X3,y3)
+y1_test_lm = lm1.predict(X_test)
+y3_test_lm = lm3.predict(X_test)
+# and plot the results
+fig2,axes = plt.subplots(nrows=1,ncols=3,figsize = (8,3))
+axes[0].plot(X,y1,'.',label='data',color='0.5')
+axes[0].plot(X_test,y1_test,'-',color='red',label='naive rf model')
+axes[0].plot(X_test,y1_test_lm,'-',color='blue',label='linear regression')
+axes[1].plot(X,y2,'.',color='0.5')
+axes[1].plot(X_test,y2_test,'-',color='red')
+axes[2].plot(X3,y3,'.',color='0.5')
+axes[2].plot(X_test,y3_test,'-',color='red')
+axes[2].plot(X_test,y3_test_lm,'-',color='blue')
+axes[0].set_xlim((0,10));axes[0].set_ylim((-5,28))
+axes[2].set_xlim((0,10));axes[2].set_ylim((-5,28))
+axes[0].legend(loc='lower right',fontsize = 8)
+fig2.tight_layout()
+fig2.show()
+
+# You should see that there are the following features
+# 1) Able to fit complex non-linear functions, without specifying functional
+#    relationship
+# 2) Tendency to overfit with default hyperparameters - would want to conduct
+#    a proper calibration-validation procedure to test which options to choose.
+# 3) Inability to extrapolate outside of the parameter space occupied by the
+#    training set
+# 4) Inability to interpolate across large gaps in parameter space (random
+#    forest algorithm tends to cluster data)
+# 5) Tendency to under-predict extremes
 
 """
 #===============================================================================
