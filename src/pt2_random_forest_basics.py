@@ -201,7 +201,7 @@ rf = RandomForestRegressor(bootstrap=True,
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=None,         # seed used by the random number generator
             verbose=0,
-            warm_start=False)
+            wa_start=False)
 
 # To do this properly would obviously be very time consuming and tedious.
 # scikit-learn have programmed automatic routines to search through the
@@ -249,7 +249,7 @@ rf = RandomForestRegressor(bootstrap=True,
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=None,         # seed used by the random number generator
             verbose=0,
-            warm_start=False)
+            wa_start=False)
 
 # fit the calibration sample
 rf.fit(X_train,y_train)
@@ -359,75 +359,53 @@ fig5.show()
 # fitting the model across the range of the variable of interest. We'll try
 # this now.
 """
+# Variable in position 11 (WClim2_12) exhibited the strongest importance, so
+# we'll try with this first
 n_variables=X.shape[1]
-RM_ = np.arange(np.min(X[:,5]),np.max(X[:,5])+1)
-X_RM = np.zeros((RM_.size,n_variables))
+var_ = np.linspace(np.min(X[:,11]),np.max(X[:,11])+1,200)
+X_RM = np.zeros((var_.size,n_variables))
 for i in range(0,n_variables):
-    if i == 5:
-        X_RM[:,i] = RM_.copy()
+    if i == 11:
+        X_RM[:,i] = var_.copy()
     else:
         X_RM[:,i] = np.mean(X[:,i])
 
 # predict with rf model
 y_RM = rf.predict(X_RM)
 # now plot
-plt.figure(2, facecolor='White',figsize=[5,5])
-ax = plt.subplot2grid((1,1),(0,0))
-ax.plot(RM_, y_RM,'-')
-ax.set_ylabel("Median house price / $1000s")
-ax.set_xlabel("Average number of rooms")
-plt.tight_layout()
-plt.savefig('test_partial_deps_1.png')
-plt.show()
-
-# Now let's look at another variable - house age
-AGE_ = np.linspace(np.min(X[:,6]),np.max(X[:,6]),100)
-X_AGE = np.zeros((AGE_.size,n_variables))
-for i in range(0,n_variables):
-    if i == 6:
-        X_AGE[:,i] = AGE_.copy()
-    else:
-        X_AGE[:,i] = np.mean(X[:,i])
-
-# predict with rf model
-y_AGE = rf.predict(X_AGE)
-# now plot
-plt.figure(3, facecolor='White',figsize=[5,5])
-ax = plt.subplot2grid((1,1),(0,0))
-ax.plot(AGE_, y_AGE,'-')
-ax.set_xlabel("percentage homes built prior to 1940")
-ax.set_ylabel("Median house price / $1000s")
-plt.tight_layout()
-plt.savefig('test_partial_deps_2.png')
-plt.show()
-
+fig6,ax = plt.subplots(figsize=[8,5])
+ax.plot(var_, y_RM,'-')
+ax.set_xlabel(labels[11])
+ax.set_ylabel("AGB / Mg ha$^{-1}$")
+fig6.tight_layout()
+fig6.show()
 
 # Really we would want to plot a number of lines for different combinations of
 # the other explanatory variables, rather than just the average, since the
 # relationship may not hold across the entire parameter space (and could be
 # quite different!)
 
-# Lets do that quickly now for the house age example
-plt.figure(4, facecolor='White',figsize=[5,5])
-ax = plt.subplot2grid((1,1),(0,0))
+# Lets do that quickly now
+fig7,ax = plt.subplots(figsize=[8,5])
 
 N_iterations = 20
 for i in range(0,N_iterations):
     sample_row = np.random.randint(0,X.shape[0]+1)
-    X_AGE_i = np.zeros((AGE_.size,n_variables))
+    X_i = np.zeros((var_.size,n_variables))
     for j in range(0,n_variables):
-        if j == 6:
-            X_AGE_i[:,j] = AGE_.copy()
+        if j == 11:
+            X_i[:,j] = _.copy()
         else:
-            X_AGE_i[:,j] = (X[sample_row,j])
+            X_i[:,j] = (X[sample_row,j])
 
     # predict with rf model
-    y_AGE_i = rf.predict(X_AGE_i)
-    ax.plot(AGE_, y_AGE_i,'-',c='0.5',linewidth=0.5)
+    y_i = rf.predict(X_i)
+    ax.plot(var_, y_i,'-',c='0.5',linewidth=0.5,alpha=0.8)
 
-ax.plot(AGE_, y_AGE,'-') # also plot line from before for comparison
-ax.set_xlabel("percentage homes built prior to 1940")
-ax.set_ylabel("Median house price / $1000s")
-plt.tight_layout()
-plt.savefig('test_partial_deps_3.png')
-plt.show()
+ax.plot(var_, y_RM,'-') # also plot line from before for comparison
+ax.set_xlabel(labels[11])
+ax.set_ylabel("AGB / Mg ha$^{-1}$")
+fig7.tight_layout()
+fig7.show()
+
+# If you like, you could try this for another variable to see how they look
