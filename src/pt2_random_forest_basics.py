@@ -27,24 +27,33 @@ interested, you are welcome to browse this at your leisure.
 import numpy as np                  # standard package for scientific computing
 import xarray as xr                 # xarray geospatial package
 import matplotlib.pyplot as plt     # plotting package
-#import seaborn as sns               # another useful plotting package
+import seaborn as sns               # another useful plotting package
 #sns.set()                           # set some nice default plotting options
 
 # Import some parts of the scikit-learn library
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score, mean_squared_error
+
+import eli5
+from eli5.sklearn import PermutationImportance
 
 # Import custom libaries
-"""
+
 import sys
 sys.path.append('./random_forest/')
+sys.path.append('./data_io/')
+
+import data_io as io
+import set_training_areas as training_areas
+"""
 import cal_val as cv                # a set of functions to help with calibration and validation
 import random_forest as rf          # a set of functions to help fit and interpret random forest models
 """
 """
 #===============================================================================
-PART A: FITTING SIMPLE RANDOM FOREST REGRESSION MODELS
+PART A: FITTING SIMPLE RANDOM FOREST REGRESSION MODELS & BASIC CAL-VAL
 A toy example; comparing random forest regression and linear regression models
 #-------------------------------------------------------------------------------
 """
@@ -119,17 +128,110 @@ fig2.show()
 #    forest algorithm tends to cluster data)
 # 5) Tendency to under-predict extremes
 
+# Let's run a quick calibration-validation procedure. Here we hold back a
+# fraction of the data from the model fitting and use this to test the fitted
+# random forest model on independent data. This allows an assessment of
+# overfitting, which is characteristically indicated in a reduction in the
+# quality of fit between the calibration and validation set.
+
+# Scikit-learn has tools already coded up to help with this process.
+
+# We will focus on the non-linear example (example 2 from above) in the first
+# instance
+
+# Split the training data into a calibration and validation set using the scikit learn toolbox
+# in this case we will use a 50-50 split. In real applications one might
+# consider using k-fold cross-validation (available in scikit-learn toolbox)
+X_train, X_test, y_train, y_test = train_test_split(X, y2, train_size=0.5,
+                                                    test_size=0.5)
+#create the random forest object with predefined parameters
+rf = RandomForestRegressor()
+# fit the calibration sample
+rf.fit(X_train,y_train)
+y_train_rf = rf.predict(X_train)
+cal_score = rf.score(X_train,y_train) # calculate coefficeint of determination R^2 of the calibration
+print("Calibration R$^2$ = %.02f" % cal_score)
+y_test_rf = rf.predict(X_test)
+val_score = rf.score(X_test,y_test)
+print("Validation R$^2$ = %.02f" % val_score)
+# Plot the calibration and validation data
+# - First put observations and model values into dataframe for easy plotting with seaborn functions
+calval_df = pd.DataFrame(data = {'val_obs': y_test,
+                                 'val_model': y_test_rf,
+                                 'cal_obs': y_train,
+                                 'cal_model': y_train_rf})
+
+fig3,axes= plt.subplots(nrows=1,ncols=2,figsize=[8,4])
+sns.regplot(x='cal_obs',y='cal_model',data=calval_df,marker='+',
+            truncate=True,ci=None,ax=axes[0])
+axes[0].annotate('calibration R$^2$ = %.02f\nRMSE = %.02f' %
+            (cal_score,np.sqrt(mean_squared_error(y_train,y_train_rf))),
+            xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',
+            horizontalalignment='left', verticalalignment='top')
+sns.regplot(x='val_obs',y='val_model',data=calval_df,marker='+',
+            truncate=True,ci=None,ax=axes[1])
+axes[1].annotate('validation R$^2$ = %.02f\nRMSE = %.02f'
+            % (val_score,np.sqrt(mean_squared_error(y_test,y_test_rf))),
+            xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',
+            horizontalalignment='left', verticalalignment='top')
+axes[0].axis('equal')
+axes[1].axis('equal')
+fig3.tight_layout()
+fig3.show()
+
+
+# If you like, you can try to tweak the random forest hyperparameters to see if
+# the overfiting can be reduced.
+# The potential hyperparameters are indicated below. Those noted with a *** are
+# particularly important. I'd suggest starting with n_estimators (the number of
+# trees used to construct the random forest) and min_samples_split (the minimum
+# number of data points within a leaf node before it gets split).
+rf = RandomForestRegressor(bootstrap=True,
+            criterion='mse',           # criteria used to choose split point at each node
+            max_depth=None,            # ***maximum number of branching levels within each tree
+            max_features='auto',       # ***the maximum number of variables used in a given tree
+            max_leaf_nodes=None,       # the maximum number of leaf nodes per tree
+            min_impurity_decrease=0.0, # the miminum drop in the impurity of the clusters to justify splitting further
+            min_impurity_split=None,   # threshold impurity within an internal node before it will be split
+            min_samples_leaf=20,        # ***The minimum number of samples required to be at a leaf node
+            min_samples_split=2,       # ***The minimum number of samples required to split an internal node
+            min_weight_fraction_leaf=0.0,
+            n_estimators=100,          # ***Number of trees in the random forest
+            n_jobs=-1,                 # The number of jobs to run in parallel for both fit and predict
+            oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
+            random_state=None,         # seed used by the random number generator
+            verbose=0,
+            warm_start=False)
+
+# To do this properly would obviously be very time consuming and tedious.
+# scikit-learn have programmed automatic routines to search through the
+# hyperparameter options and find a near-optimal calibration (RandomizedSearch
+# and GridSearch).
+# These are beyond the scope of this workshop, but feel free to check them out
+# if you want to do this yourself.
+
 """
 #===============================================================================
-PART B: POTENTIAL BIOMASS ESTIMATION, AND BASIC CAL-VAL
+PART B: POTENTIAL BIOMASS ESTIMATION
 Fit random forest regression models to estimate potential biomass stocks.
 Calibrate and validate potential biomass models
-Basic interpretation of models (variable importances etc.)
 #-------------------------------------------------------------------------------
 """
-# Split the training data into a calibration and validation set using the scikit learn tool
-X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.5, test_size=0.5)
+# First of all, let's load in some data again
+predictors,AGB,landmask,labels=io.load_predictors()
 
+# Now create the training set
+# First create training mask based on Hinterland Forest Landscapes mapped by
+# Tyukavina et al (2015, Global Ecology and Biogeography) and stable non-forest
+# (natural) classes from ESA CCI land cover dataset
+training_mask= training_areas.set()
+
+# Now subset the predictors and AGB data according to this training mask
+X = predictors[training_mask[landmask]]
+y = AGB[training_mask[landmask]]
+
+# Split the training data into a calibration and validation set using the scikit learn tool
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, test_size=0.25)
 #create the random forest object with predefined parameters
 # *** = parameters that often come out as being particularly sensitive
 rf = RandomForestRegressor(bootstrap=True,
@@ -139,8 +241,8 @@ rf = RandomForestRegressor(bootstrap=True,
             max_leaf_nodes=None,       # the maximum number of leaf nodes per tree
             min_impurity_decrease=0.0, # the miminum drop in the impurity of the clusters to justify splitting further
             min_impurity_split=None,   # threshold impurity within an internal node before it will be split
-            min_samples_leaf=5,#20,,       # ***The minimum number of samples required to be at a leaf node
-            min_samples_split=2,       # ***The minimum number of samples required to split an internal node
+            min_samples_leaf=5,       # ***The minimum number of samples required to be at a leaf node
+            min_samples_split=20,       # ***The minimum number of samples required to split an internal node
             min_weight_fraction_leaf=0.0,
             n_estimators=100,          # ***Number of trees in the random forest
             n_jobs=-1,                 # The number of jobs to run in parallel for both fit and predict
@@ -162,47 +264,88 @@ print("Validation R$^2$ = %.02f" % val_score)
 
 # Plot the calibration and validation data
 # - First put observations and model values into dataframe for easy plotting with seaborn functions
-calval_df = pd.DataFrame(data = {'val_obs': y_test,
-                                 'val_model': y_test_rf,
-                                 'cal_obs': y_train,
-                                 'cal_model': y_train_rf})
+cal_df = pd.DataFrame(data = {'cal_obs': y_train,
+                              'cal_model': y_train_rf})
+val_df = pd.DataFrame(data = {'val_obs': y_test,
+                              'val_model': y_test_rf})
 
-plt.figure(1, facecolor='White',figsize=[8,4])
-ax_a = plt.subplot2grid((1,2),(0,0))
-sns.regplot(x='cal_obs',y='cal_model',data=calval_df,marker='+',
-            truncate=True,ci=None,ax=ax_a)
-ax_a.annotate('calibration R$^2$ = %.02f\nRMSE = %.02f' %
+
+fig4,axes= plt.subplots(nrows=1,ncols=2,figsize=[8,4])
+sns.regplot(x='cal_obs',y='cal_model',data=cal_df,marker='.',
+            truncate=True,ci=None,ax=axes[0],
+            scatter_kws={'alpha':0.01,'edgecolor':'none'},
+            line_kws={'color':'k'})
+axes[0].annotate('calibration R$^2$ = %.02f\nRMSE = %.02f' %
             (cal_score,np.sqrt(mean_squared_error(y_train,y_train_rf))),
             xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',
             horizontalalignment='left', verticalalignment='top')
-ax_b = plt.subplot2grid((1,2),(0,1),sharex = ax_a)
-sns.regplot(x='val_obs',y='val_model',data=calval_df,marker='+',
-            truncate=True,ci=None,ax=ax_b)
-ax_b.annotate('validation R$^2$ = %.02f\nRMSE = %.02f'
+sns.regplot(x='val_obs',y='val_model',data=val_df,marker='.',
+            truncate=True,ci=None,ax=axes[1],
+            scatter_kws={'alpha':0.01,'edgecolor':'none'},
+            line_kws={'color':'k'})
+axes[1].annotate('validation R$^2$ = %.02f\nRMSE = %.02f'
             % (val_score,np.sqrt(mean_squared_error(y_test,y_test_rf))),
             xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',
             horizontalalignment='left', verticalalignment='top')
-ax_a.axis('equal')
-plt.savefig('test_rf.png')
-plt.show()
-
-# VARIABLE IMPORTANCES
-# fit the full model
-rf.fit(X,y)
-cal_score_full = rf.score(X,y)
-print("Calibration R$^2$ = %.02f" % cal_score_full)
-
-# get variable importances
-names = data["feature_names"][:11]
-importances = rf.feature_importances_
-print('Variables listed in order of importance')
-print sorted(zip(map(lambda x: round(x, 4), importances), names), reverse=True)
-
-
+axes[0].axis('equal')
+axes[1].axis('equal')
+fig4.tight_layout()
+fig4.show()
 
 """
 #===============================================================================
-# PART C: USING PARTIAL DEPENDENCIES TO UNDERSTAND FUNCTIONAL EFFECTS
+# PART C: HOW IMPORTANT ARE DIFFFERENT VARIABLES?
+#-------------------------------------------------------------------------------
+# A really useful feature of random forest algorithms is that they allow one to
+# estimate the relative importance of each of the explanatory variables. This
+# can be useful both for understanding the system, and also for simplifying the
+# model if desired.
+# The default scikit-learn implemntation uses the mean decrease in impurity
+# importance of each variable, computed by measuring how effective the variable
+# is at reducing uncertainty the variance when creating the decision trees
+#
+# Instead of the gini importance, which can be biased, a more rigorous, but
+# intensive approach is to use the permutation importance (Strobl et al (2008,
+# BMC Bioinformatics); see also https://explained.ai/rf-importance/index.html).
+# This estimates importance based on how the fit quality drops when a variable
+# is unavailable.
+#
+# Note there are some caveats - if there are colinear variables, the importance
+# values may not be so straightforward to interpret as this deflates the
+# importance values, due to the variance being equally well described by
+# multiple explanatory variables.
+#
+# Orthogonalisation of the predictors (e.g. running a PCA) may therefore be a
+# useful preprocessing step.
+#
+# Also, if you have a weak model, the importances could vary substantially if
+# you try to repeat the calibration
+"""
+# VARIABLE IMPORTANCES
+perm = PermutationImportance(rf).fit(X_test, y_test)
+# note to access all score decreases across all permutations, use perm.results_
+# For now, we'll just deal with means and standard deviations
+imp_df = pd.DataFrame(data = {'variable': labels,
+                              'permutation_importance': perm.feature_importances_,
+                              'gini_importance': rf.feature_importances_})
+
+fig5,axes= plt.subplots(nrows=1,ncols=2,figsize=[8,8],sharex=True)
+sns.barplot(x='permutation_importance',y='variable',data=imp_df,ax=axes[0])
+axes[0].annotate('permutation importance',
+            xy=(0.95,0.98), xycoords='axes fraction',backgroundcolor='none',
+            horizontalalignment='right', verticalalignment='top')
+sns.barplot(x='gini_importance',y='variable',data=imp_df,ax=axes[1])
+axes[1].annotate('gini importance',
+            xy=(0.95,0.98), xycoords='axes fraction',backgroundcolor='none',
+            horizontalalignment='right', verticalalignment='top')
+plt.setp(axes[1].get_yticklabels(),visible=False)
+axes[1].yaxis.set_ticks_position('left')
+fig5.tight_layout()
+fig5.show()
+
+"""
+#===============================================================================
+# PART D: USING PARTIAL DEPENDENCIES TO UNDERSTAND FUNCTIONAL EFFECTS
 #-------------------------------------------------------------------------------
 # Importances tell you which variables were important in determining the target
 # variable, but we still don't know how these explanatory variables effect the
