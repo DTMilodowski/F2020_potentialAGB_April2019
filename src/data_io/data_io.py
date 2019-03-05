@@ -47,12 +47,14 @@ def load_predictors(path2root = "../"):
     # Path structures
     path2wc = path2root+'/data/climatology/'
     path2sg = path2root+'/data/soils/'
-    path2agb = path2root+'data/agb/'
+    path2agb = path2root+'/data/agb/'
 
     # Load the worldclim2 data
     nodata=[]
+    labels = []
     for ff in sorted(glob.glob(path2wc+'*tif')):
         nodata.append(rasterio.open(ff).nodatavals[0])
+        labels.append('WClim2_' + ff.split('_')[-2])
 
     wc2 = xr.concat([xr.open_rasterio(f) for f in sorted(glob.glob(path2wc+'*tif'))],dim='band')
     wc2_mask = wc2[0]!=nodata[0]
@@ -66,14 +68,18 @@ def load_predictors(path2root = "../"):
     soilfiles = []
     #             %sand %silt %clay %D2Rhorizon %probRhorizon %D2bedrock
     filtervars = ['SNDPPT','SLTPPT','CLYPPT','BDRICM','BDRLOG','BDTICM']
-    for ff in range(len(soilfiles_all)):
-        if soilfiles_all[ff].split('/')[-1].split('.')[0].split('_')[0] in filtervars:
-            soilfiles.append(soilfiles_all[ff])
+    for ff in soilfiles_all:
+        var_iter = ff.split('/')[-1].split('.')[0].split('_')[1]
+        if var_iter in filtervars:
+            soilfiles.append(ff)
+            if var_iter in ['BDRICM','BDRLOG','BDTICM']:
+                labels.append(var_iter)
+            else:
+                labels.append(var_iter + '_' + ff.split('_')[-2])
 
     nodata=[]
     for ff in sorted(soilfiles):
         nodata.append(rasterio.open(ff).nodatavals[0])
-
     soil= xr.concat([xr.open_rasterio(f) for f in sorted(soilfiles)],dim='band')
     soil_mask = soil[0]!=nodata[0]
     for ii in range(soil.shape[0]):
@@ -81,9 +87,10 @@ def load_predictors(path2root = "../"):
     print('Loaded SOILGRIDS data')
 
     #also load the AGB data to check we only keep pixels with AGB estimates
-    agb_file = '%sAvitabile_AGB_%s_1km.tif' % (path2agb,country_code)
+    agb_file = glob.glob(path2agb+'*AGB_2km.tif')[0]
     agb = xr.open_rasterio(agb_file)
     agb_mask = agb.values[0]!=np.float32(agb.nodatavals[0])
+    print('Loaded AGB data')
 
     #create the land mask by combining the nodata masks for all data sources
     landmask = (wc2_mask.values & soil_mask.values & agb_mask)
@@ -107,8 +114,7 @@ def load_predictors(path2root = "../"):
     for sp in soil:
         predictors[:,counter] = sp.values[landmask]
         counter += 1
-    print('Extracted WorldClim2 and SOILGRIDS data')
+    print('Extracted WorldClim2 and SOILGRIDS data, with corresponding AGB')
+    agb_out = agb.values[0][landmask]
 
-    agb_out = agb.values[landmask]
-
-    return(predictors,agb_out,landmask)
+    return(predictors,agb_out,landmask,labels)
