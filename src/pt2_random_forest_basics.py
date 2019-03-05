@@ -305,7 +305,7 @@ fig4.show()
 # is at reducing uncertainty the variance when creating the decision trees
 #
 # Instead of the gini importance, which can be biased, a more rigorous, but
-# intensive approach is to use the permutation importance (Strobl et al (2008,
+# intensive approach is to use the permutation importance (Strobl et al (2007,
 # BMC Bioinformatics); see also https://explained.ai/rf-importance/index.html).
 # This estimates importance based on how the fit quality drops when a variable
 # is unavailable.
