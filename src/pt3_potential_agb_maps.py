@@ -15,6 +15,9 @@ deficit, which is the difference between the observed and potential AGB and
 represents a data-driven estimate of the restoration potential with respect to
 C sequestration.
 
+Finally, we'll finish up by saving the raster layers to geotiffs that can be
+loaded up onto an EO lab.
+
 The detailed code underlying much of the following analyses are stashed away in
 the source code, so you don't need to worry about them too much. If you are
 interested, you are welcome to browse this at your leisure.
@@ -34,22 +37,18 @@ import seaborn as sns               # another useful plotting package
 
 # Import some parts of the scikit-learn library
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score, mean_squared_error
-
-import eli5
-from eli5.sklearn import PermutationImportance
 
 # Import custom libaries
 import sys
 sys.path.append('./random_forest/')
 sys.path.append('./data_io/')
 sys.path.append('./data_visualisation/')
+sys.path.append('./eolab/')
 
 import data_io as io
 import set_training_areas as training_areas
-import map_figure as mfig
+import map_figures as mfig
+import prepare_EOlab_layers as eo
 
 """
 #===============================================================================
@@ -88,8 +87,7 @@ rf = RandomForestRegressor(bootstrap=True,
             n_jobs=-1,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=None,         # seed used by the random number generator
-            verbose=0,
-            wa_start=False)
+            verbose=0)
 
 # fit the model
 rf.fit(X,y)
@@ -110,7 +108,7 @@ agb = agb_ds.sel(band=1)
 
 # rename coordinates to latitude and longitude
 agb = agb.rename(x='longitude',y='latitude')
-agb.values[agb.values]<0]=np.nan
+agb.values[agb.values<0]=np.nan
 
 #let's copy to a new xarray for AGBpot
 agbpot = agb.copy()
@@ -118,7 +116,7 @@ agbpot.values = np.zeros(landmask.shape)*np.nan
 agbpot.values[landmask] = AGBpot.copy()
 
 # Then we plot up both maps for comparison
-fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(8,10))
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10,6))
 agb.plot(ax=axes[0], vmin=0, vmax=400, cmap='viridis', add_colorbar=True,
                     extend='max', cbar_kwargs={'label': 'AGB / Mg ha$^{-1}$',
                     'orientation':'horizontal'})
@@ -142,10 +140,27 @@ straightforward to add and subtract xarrays
 agbdef = agb.copy()
 agbdef.values = agbpot.values-agb.values
 
-fig, axis = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
-agb.plot(ax=axis, vmin=-200, vmax=200, cmap='bwr_r', add_colorbar=True,
+fig, axis = plt.subplots(nrows=1, ncols=1, figsize=(6,6))
+agbdef.plot(ax=axis, vmin=-200, vmax=200, cmap='bwr_r', add_colorbar=True,
                     extend='both', cbar_kwargs={'label': 'AGB$_{def}$ / Mg ha$^{-1}$',
                     'orientation':'horizontal'})
 axis.set_aspect("equal")
 axis.set_title("AGB deficit")
 plt.show()
+
+
+"""
+#===============================================================================
+PART C: PRODUCING EO LABORATORY LAYERS
+Save layers as geotiffs suitable for uploading onto EO lab apps.
+#-------------------------------------------------------------------------------
+"""
+output_prefix = '../EOlab_layers/F2020_workshop_AGBpot' # a prefix for your output file.
+cmap = 'viridis' # the colormap you want to use
+ulim=400 # the upper limit of the colormap
+llim=0 # the lower limit of the colormap
+colorbar_label = 'AGB$_{potential}$ / Mg ha$^{-1}$' # the lael for the colorbar
+# Note that writing a display layer automatically creates the corresponding
+# data layer
+eo.write_array_to_display_layer_GeoTiff(agbpot,output_prefix,cmap,ulim,llim)
+eo.plot_legend(cmap,ulim,llim,colorbar_label, output_prefix,extend='max')
