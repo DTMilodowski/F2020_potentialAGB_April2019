@@ -41,12 +41,10 @@ import sys
 sys.path.append('./random_forest/')
 sys.path.append('./data_io/')
 sys.path.append('./data_visualisation/')
-sys.path.append('./eolab/')
 
 import data_io as io
 import set_training_areas as training_areas
 import map_figures as mfig
-import prepare_EOlab_layers as eo
 
 """
 #===============================================================================
@@ -102,19 +100,35 @@ Now load in new set of predictors, this time using the climate change scenarios
 from WorldClim, rather than the regular climatologymodels we have been using
 #-------------------------------------------------------------------------------
 """
-scenario_name =
-predictors_scenario = io.load_predictors_scenario(scenario_name)
+scenario_name = 'rcp85' # choices are rcp26, rcp45, rcp60, rcp85
+predictors_scenario,AGB,scenariomask,labels= io.load_predictors_scenarios(scenario_name)
 # predict using rf model
 AGBpot_scenario = rf.predict(predictors_scenario)
 
 """
 #===============================================================================
 PART C: PLOT POTENTIAL BIOMASS UNDER FUTURE CLIMATE SCENARIO
+The scenarios represent downscaled climatology forecasts from the CMIP5
+compilation for four different RCPs
+(https://en.wikipedia.org/wiki/Representative_Concentration_Pathways),
+available here: http://www.worldclim.org/cmip5_30s
+
+We will use 2070 forecasts.
+ref: Hijmans et al, 2005. Very high resolution interpolated climate surfaces
+for global land areas. International Journal of Climatology 25: 1965-1978.
+
+Note that for simplicity, we will only use the forecast downsampled from the
+HADGEM2-ES model, not the full suite of CMIP5 simulations. Thus our potential
+AGB results represent extrapolations based on one model simulation of future
+climate, and should not be considered an accurate or robust reconstruction of
+potential AGB. This is simpley to provide an example of the potential
+applications of this methodology for looking at future AGB stocks.
+
+For a more thorough analysis, check out this article by J-.F. Exbrayat in
+Nature Scientific Reports: https://www.nature.com/articles/s41598-017-15788-6
 #-------------------------------------------------------------------------------
 """
-
-# Now lets plot this onto a map
-# We'll load in an existing dataset to get the georeferencing information
+# As before, we'll load in an existing dataset to get the georeferencing information
 agb_file = '../data/agb/colombia_Avitabile_AGB_2km.tif' # the agb file
 
 # open file and store data in an xarray called agb
@@ -133,7 +147,7 @@ agbpot.values[landmask] = AGBpot.copy()
 #now do the same for the scenario
 agbpot_scenario = agb.copy()
 agbpot_scenario.values = np.zeros(landmask.shape)*np.nan
-agbpot_scenario.values[landmask] = AGBpot_scenario.copy()
+agbpot_scenario.values[scenariomask] = AGBpot_scenario.copy()
 
 #now do the same for the potential difference
 agbpot_difference = agb.copy()
@@ -149,6 +163,6 @@ agbpot_difference.plot(ax=axes[1], vmin=-100, vmax=100, cmap='bwr_r', add_colorb
                     'orientation':'horizontal'})
 for ax in axes:
     ax.set_aspect("equal")
-axes[0].set_title("Potential AGB under %s" % scenario_name)
+axes[0].set_title("Potential AGB in 2070\nunder %s" % scenario_name)
 axes[1].set_title("Difference in potential AGB\nunder %s" % scenario_name)
 plt.show()
