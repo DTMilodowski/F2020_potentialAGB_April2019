@@ -93,7 +93,6 @@ y3_test_lm = lm3.predict(X_test)
 fig2,axes = gplt.plot_test_data_with_regression_results(X1,y1,X2,y2,X3,y3,X_test,
                         y1_test,y1_test_lm,y2_test,y3_test,y3_test_lm,show=True):
 
-
 # You should see that there are the following features
 # 1) Able to fit complex non-linear functions, without specifying functional
 #    relationship
@@ -119,7 +118,7 @@ fig2,axes = gplt.plot_test_data_with_regression_results(X1,y1,X2,y2,X3,y3,X_test
 # Split the training data into a calibration and validation set using the scikit learn toolbox
 # in this case we will use a 50-50 split. In real applications one might
 # consider using k-fold cross-validation (available in scikit-learn toolbox)
-X_train, X_test, y_train, y_test = train_test_split(X, y2, train_size=0.5,
+X_train, X_test, y_train, y_test = train_test_split(X2, y2, train_size=0.5,
                                                     test_size=0.5)
 #create the random forest object with predefined parameters
 rf = RandomForestRegressor()
@@ -128,34 +127,14 @@ rf.fit(X_train,y_train)
 y_train_rf = rf.predict(X_train)
 cal_score = rf.score(X_train,y_train) # calculate coefficeint of determination R^2 of the calibration
 print("Calibration R$^2$ = %.02f" % cal_score)
+# now test the validation sample
 y_test_rf = rf.predict(X_test)
 val_score = rf.score(X_test,y_test)
 print("Validation R$^2$ = %.02f" % val_score)
+
 # Plot the calibration and validation data
 # - First put observations and model values into dataframe for easy plotting with seaborn functions
-calval_df = pd.DataFrame(data = {'val_obs': y_test,
-                                 'val_model': y_test_rf,
-                                 'cal_obs': y_train,
-                                 'cal_model': y_train_rf})
-
-fig3,axes= plt.subplots(nrows=1,ncols=2,figsize=[8,4])
-sns.regplot(x='cal_obs',y='cal_model',data=calval_df,marker='+',
-            truncate=True,ci=None,ax=axes[0])
-axes[0].annotate('calibration R$^2$ = %.02f\nRMSE = %.02f' %
-            (cal_score,np.sqrt(mean_squared_error(y_train,y_train_rf))),
-            xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',
-            horizontalalignment='left', verticalalignment='top')
-sns.regplot(x='val_obs',y='val_model',data=calval_df,marker='+',
-            truncate=True,ci=None,ax=axes[1])
-axes[1].annotate('validation R$^2$ = %.02f\nRMSE = %.02f'
-            % (val_score,np.sqrt(mean_squared_error(y_test,y_test_rf))),
-            xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',
-            horizontalalignment='left', verticalalignment='top')
-axes[0].axis('equal')
-axes[1].axis('equal')
-fig3.tight_layout()
-fig3.show()
-
+fig3,axes=gplot.plot_cal_val(y_train,y_train_rf,y_test,y_test_rf)
 
 # If you like, you can try to tweak the random forest hyperparameters to see if
 # the overfiting can be reduced.
