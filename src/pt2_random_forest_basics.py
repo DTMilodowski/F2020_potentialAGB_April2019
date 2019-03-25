@@ -46,6 +46,7 @@ sys.path.append('./random_forest/')
 sys.path.append('./data_io/')
 
 import data_io as io
+import utility as util
 import set_training_areas as training_areas
 """
 import cal_val as cv                # a set of functions to help with calibration and validation
@@ -57,15 +58,7 @@ PART A: FITTING SIMPLE RANDOM FOREST REGRESSION MODELS & BASIC CAL-VAL
 A toy example; comparing random forest regression and linear regression models
 #-------------------------------------------------------------------------------
 """
-X = np.random.random(500)*10. # generate a set of random numbers between 0 and 10
-y1= 2.3*X + np.random.randn(500)*1. # generate a linear relationship with some noise - here noise comes from a random distribution with mean 0 and standard deviation of 1.
-y2= np.cos(X**0.5*5)+0.2*X + np.random.randn(500)*0.3 # a more complex nonlinear function
-# Finally, lets make a version of y1 where we have gaps at the start, end and
-# middle of the dataset. Don't worry about the details for now
-temp = X.copy()
-temp[X<1.7] = np.nan; temp[X>9.5]=np.nan; temp[np.all((X>3.4,X<6.5),axis=0)]=np.nan
-X3 = X[np.isfinite(temp)]
-y3=y1[np.isfinite(temp)]
+X1,y1,X2,y2,X3,y3 = util.generate_simple_test_data()
 
 # Let's just plot up these trial datsets so we can see what we are dealing with
 #sns.set_style("darkgrid")
