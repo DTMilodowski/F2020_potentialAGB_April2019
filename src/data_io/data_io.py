@@ -18,6 +18,36 @@ import xarray as xr #xarray to read all types of formats
 import rasterio
 
 """
+load_geotiff
+A very simple function that reads a geotiff and returns it as an xarray. Nodata
+values are converted to the numpy nodata value.
+The input arguments are:
+- filename (this should include the full path to the file)
+Optional arguments are:
+- band (default = 1)
+- x_name (default = 'longitude')
+- y_name (default = 'latitude')
+- nodata_option (default = 0).
+            0: use value in dataset metadata. This is usually fine, except if
+                there is an issue with the precision, and is applied in all
+                cases.
+            1: arbitrary cutoff for nodata to account for precision problems
+                with float32. Other similar options could be added if necessary.
+            2: set all negative values as nodata
+
+
+"""
+def load_geotiff(filename, band = 1,x_name='longitude',y_name='latitude',option=0):
+    xarr = xr.open_rasterio(filename).sel(band=band)
+    xarr = xarr.rename(x=x_name,y=y_name)
+    xarr.values[xarr.values==xarr.nodatavals[0]]=np.nan
+    if(option==1):
+        xarr.values[xarr.values<-3*10**38]=np.nan
+    if(option==2):
+        xarr.values[xarr.values<0]=np.nan
+    return xarr #return the xarray object
+
+"""
 load_predictors
 This function loads all of the datasets containign the explanatory variables,
 and applies a mask so that only land areas are considered, and any nodata values
