@@ -128,10 +128,8 @@ Subsets of xarrays
 # subset of an xarray - see http://xarray.pydata.org/en/stable/indexing.html
 # We are not going to go through every example here, but a simple spatial
 # subset can be taken if we know the coordinate bounds
-min_lat = 0
-max_lat = 7
-min_long = -77
-max_long = -60
+min_lat = 0; max_lat = 7
+min_long = -77; max_long = -60
 agb_subset = agb.sel(latitude=slice(max_lat,min_lat),longitude = slice(min_long,max_long))
 # Note that since our latitudes are listed in decreasing order, we take the
 # slice from max to min, which might seem initially counter-intuitive.
