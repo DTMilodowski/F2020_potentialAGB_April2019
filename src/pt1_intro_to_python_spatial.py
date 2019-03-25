@@ -31,6 +31,15 @@ import matplotlib.pyplot as plt     # plotting package
 import seaborn as sns               # another useful plotting package
 sns.set()                           # set some nice default plotting options
 
+# Include also the custom packages built for this course
+import sys
+sys.path.append('./data_io/') # this tells python where to find the extra
+                              # files in the data_io folder
+import data_io as io
+sys.path.append('./data_visualisation/') # this tells python where to find the extra
+                                         # files in the data_visualisation folder
+import map_plots as mplt
+
 """
 Part 1A: Loading a dataset using xarray
 We are going to start by loading a raster dataset into python using xarray,
@@ -81,6 +90,12 @@ agb.values[agb.values<0]=np.nan
 print(ds.coords)
 print(agb.coords)
 
+# Note that I have created a simple function to do the above steps to load in
+# the dataset. If you are interested to see more, it is located in the file
+# './data_io/data_io.py'
+agb = io.load_geotiff(agb_file,option=1)
+# This makes your life a bit easier
+
 # We'll explore xarray interactions further in due course, but for now, it is
 # worthwhile simply plotting a map of the data. With xarray, this is really easy.
 
@@ -93,7 +108,18 @@ agb.plot(ax=axis, vmin=0, vmax=400, cmap='viridis', add_colorbar=True,
                     extend='max', cbar_kwargs={'label': 'AGB / Mg ha$^{-1}$',
                     'orientation':'horizontal'})
 axis.set_aspect("equal")
-plt.show()
+fig.show()
+
+# As with loading the array, this simple plotting script has been packaged up
+# into a one line function, located in the file:
+# './data_visualisation/map_plots.py'
+cbar_orientation = 'horizontal' # other option is vertical
+cbar_label = 'AGB / Mg ha$^{-1}$'
+cbar_options = {'label':cbar_label,'orientation':cbar_orientation}
+fig,axis = mplt.plot_xarray(agb, vmin=0, vmax=400, add_colorbar=True, cbar_kwargs=cbar_options)
+
+# or, with just the default options
+fig,axis = mplt.plot_xarray(agb)
 
 """
 Subsets of xarrays
@@ -109,21 +135,11 @@ max_long = -60
 agb_subset = agb.sel(latitude=slice(max_lat,min_lat),longitude = slice(min_long,max_long))
 # Note that since our latitudes are listed in decreasing order, we take the
 # slice from max to min, which might seem initially counter-intuitive.
-fig, axis = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
-agb_subset.plot(ax=axis, vmin=0, vmax=400, cmap='viridis', add_colorbar=True,
-                    extend='max', cbar_kwargs={'label': 'AGB / Mg ha$^{-1}$',
-                    'orientation':'horizontal'})
-axis.set_aspect("equal")
-plt.show()
+fig,axis = mplt.plot_xarray(agb_subset, vmin=0, vmax=400, add_colorbar=True, cbar_kwargs=cbar_options)
 
 # of course, we could have achieved the same plot without creating a new object:
-fig, axis = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
-agb.sel(latitude=slice(max_lat,min_lat),longitude = slice(min_long,max_long)).plot(
-                    ax=axis, vmin=0, vmax=400, cmap='viridis', add_colorbar=True,
-                    extend='max', cbar_kwargs={'label': 'AGB / Mg ha$^{-1}$',
-                    'orientation':'horizontal'})
-axis.set_aspect("equal")
-plt.show()
+fig,axis = mplt.plot_xarray(agb.sel(latitude=slice(max_lat,min_lat),longitude = slice(min_long,max_long)),
+                            vmin=0, vmax=400, add_colorbar=True, cbar_kwargs=cbar_options)
 
 """
 Now try plotting some of the other datasets that we are going to use.
@@ -155,7 +171,7 @@ WorldClim2 climatology (http://www.worldclim.org/bioclim):
             BIO19 = Precipitation of Coldest Quarter
 
 SoilGrids data (https://soilgrids.org/):
-    filename = '../data/soils/'
+    filename = '../data/soils/?'
     where ? refers to one of the following files:
         colombia_BDRICM_M_2km.tif
         colombia_BDRLOG_M_2km.tif
