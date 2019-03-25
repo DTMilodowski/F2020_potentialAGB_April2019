@@ -44,10 +44,12 @@ from eli5.sklearn import PermutationImportance
 import sys
 sys.path.append('./random_forest/')
 sys.path.append('./data_io/')
+sys.path.append('./data_visualisation/')
 
 import data_io as io
 import utility as util
 import set_training_areas as training_areas
+import general_plots as gplt
 """
 import cal_val as cv                # a set of functions to help with calibration and validation
 import random_forest as rf          # a set of functions to help fit and interpret random forest models
@@ -61,22 +63,14 @@ A toy example; comparing random forest regression and linear regression models
 X1,y1,X2,y2,X3,y3 = util.generate_simple_test_data()
 
 # Let's just plot up these trial datsets so we can see what we are dealing with
-#sns.set_style("darkgrid")
-#sns.set_style("ticks")
-#sns.despine()
-fig1,axes = plt.subplots(nrows=1,ncols=3,figsize = (8,3))
-axes[0].plot(X,y1,'.')
-axes[1].plot(X,y2,'.')
-axes[2].plot(X3,y3,'.')
-axes[0].set_xlim((0,10));axes[0].set_ylim((-5,28))
-axes[2].set_xlim((0,10));axes[2].set_ylim((-5,28))
-fig1.tight_layout()
-fig1.show()
+fig1,axes=gplot.plot_test_data(X1,y1,X2,y2,X3,y3)
 
 # Now lets fit a very simple random forest regression model to this data
-X=X.reshape(-1, 1)
+X1=X1.reshape(-1, 1)
+X2=X2.reshape(-1, 1)
 X3=X3.reshape(-1, 1)
 X_test = np.arange(0,10,0.1).reshape(-1, 1)
+
 rf1 = RandomForestRegressor()
 rf1.fit(X,y1)
 rf2 = RandomForestRegressor()
@@ -94,21 +88,11 @@ lm1.fit(X,y1)
 lm3.fit(X3,y3)
 y1_test_lm = lm1.predict(X_test)
 y3_test_lm = lm3.predict(X_test)
+
 # and plot the results
-fig2,axes = plt.subplots(nrows=1,ncols=3,figsize = (8,3))
-axes[0].plot(X,y1,'.',label='data',color='0.5')
-axes[0].plot(X_test,y1_test,'-',color='red',label='naive rf model')
-axes[0].plot(X_test,y1_test_lm,'-',color='blue',label='linear regression')
-axes[1].plot(X,y2,'.',color='0.5')
-axes[1].plot(X_test,y2_test,'-',color='red')
-axes[2].plot(X3,y3,'.',color='0.5')
-axes[2].plot(X_test,y3_test,'-',color='red')
-axes[2].plot(X_test,y3_test_lm,'-',color='blue')
-axes[0].set_xlim((0,10));axes[0].set_ylim((-5,28))
-axes[2].set_xlim((0,10));axes[2].set_ylim((-5,28))
-axes[0].legend(loc='lower right',fontsize = 8)
-fig2.tight_layout()
-fig2.show()
+fig2,axes = gplt.plot_test_data_with_regression_results(X1,y1,X2,y2,X3,y3,X_test,
+                        y1_test,y1_test_lm,y2_test,y3_test,y3_test_lm,show=True):
+
 
 # You should see that there are the following features
 # 1) Able to fit complex non-linear functions, without specifying functional
