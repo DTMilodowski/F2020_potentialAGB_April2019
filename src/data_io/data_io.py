@@ -80,10 +80,17 @@ The function returns two objects:
        where land pixels are marked by ones, and water bodies/nodata pixels
        are marked by zeros
 """
-def load_predictors(path2root = "../"):
+def load_predictors(path2root = "../",worldclim_version=2):
 
     # Path structures
-    path2wc = path2root+'/data/climatology/'
+    if worldclim_version = 2:
+        path2wc = path2root+'/data/climatology/worldclim2/'
+    elif worldclim_version = 1.4:
+        path2wc = path2root+'/data/climatology/worldclim1_4/'
+    else:
+        print("Version not available, reverting to version 2")
+        path2wc = path2root+'/data/climatology/worldclim2/'
+
     path2sg = path2root+'/data/soils/'
     path2agb = path2root+'/data/agb/'
 
