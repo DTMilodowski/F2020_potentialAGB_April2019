@@ -83,9 +83,9 @@ The function returns two objects:
 def load_predictors(path2root = "../",worldclim_version=2):
 
     # Path structures
-    if worldclim_version = 2:
+    if worldclim_version == 2:
         path2wc = path2root+'/data/climatology/worldclim2/'
-    elif worldclim_version = 1.4:
+    elif worldclim_version == 1.4:
         path2wc = path2root+'/data/climatology/worldclim1_4/'
     else:
         print("Version not available, reverting to version 2")
