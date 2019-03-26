@@ -125,3 +125,94 @@ def plot_importances(imp_df,show=True):
     if show:
         fig5.show()
     return fig5,axes
+
+# Plot partial dependencies
+def plot_partial_dependencies_simple(rf, X, x_label=None, y_label=None,
+                                        variable_position=0, show=True):
+
+    n_variables=X.shape[1]
+    var_ = np.linspace(np.min(X[:,variable_position]),np.max(X[:,variable_position])+1,200)
+    X_RM = np.zeros((var_.size,n_variables))
+    for i in range(0,n_variables):
+        if i == variable_position:
+            X_RM[:,i] = var_.copy()
+        else:
+            X_RM[:,i] = np.mean(X[:,i])
+
+    # predict with rf model
+    y_RM = rf.predict(X_RM)
+    # now plot
+    fig6,ax = plt.subplots(figsize=[8,5])
+    ax.plot(var_, y_RM,'-')
+    if x_label is not None:
+        ax.set_xlabel(x_label)
+    if y_label is not None:
+        ax.set_ylabel(y_label)
+    fig6.tight_layout()
+    if show:
+        fig6.show()
+    return fig6, ax
+
+
+def plot_partial_dependencies_multiple(rf, X, x_label=None, y_label=None,
+                                        variable_position=0, show=True):
+    n_variables=X.shape[1]
+
+    var_ = np.linspace(np.min(X[:,variable_position]),np.max(X[:,variable_position]),200)
+    X_RM = np.zeros((var_.size,n_variables))
+
+    for i in range(0,n_variables):
+        if i == variable_position:
+            X_RM[:,i] = var_.copy()
+        else:
+            X_RM[:,i] = np.mean(X[:,i])
+
+    # predict with rf model
+    y_RM = rf.predict(X_RM)
+
+    # now plot
+    fig7,ax = plt.subplots(figsize=[8,5])
+
+
+    N_iterations = 20
+    for i in range(0,N_iterations):
+        sample_row = np.random.randint(0,X.shape[0]+1)
+        X_i = np.zeros((var_.size,n_variables))
+        for j in range(0,n_variables):
+            if j == variable_position:
+                X_i[:,j] = var_.copy()
+            else:
+                X_i[:,j] = (X[sample_row,j])
+
+        # predict with rf model
+        y_i = rf.predict(X_i)
+        ax.plot(var_, y_i,'-',c='0.5',linewidth=0.5,alpha=0.8)
+
+    ax.plot(var_, y_RM,'-') # also plot line from before for comparison
+    if x_label is not None:
+        ax.set_xlabel(x_label)
+    if y_label is not None:
+        ax.set_ylabel(y_label)
+    fig7.tight_layout()
+    if show:
+        fig7.show()
+    return fig7,axis
+
+# just add new partial dependency onto existing plot
+def add_partial_dependency_instance(ax,rf,X,variable_position=1,show=True,N_iterations=1):
+    ax=ax or plt.gca()
+    n_variables=X.shape[1]
+    var_ = np.linspace(np.min(X[:,variable_position]),np.max(X[:,variable_position]),200)
+
+    for i in range(0,N_iterations):
+        sample_row = np.random.randint(0,X.shape[0]+1)
+        X_i = np.zeros((var_.size,n_variables))
+        for j in range(0,n_variables):
+            if j == variable_position:
+                X_i[:,j] = var_.copy()
+            else:
+                X_i[:,j] = (X[sample_row,j])
+
+        # predict with rf model
+        y_i = rf.predict(X_i)
+    return ax.plot(var_, y_i,'-',c='0.5',linewidth=0.5,alpha=0.8)
