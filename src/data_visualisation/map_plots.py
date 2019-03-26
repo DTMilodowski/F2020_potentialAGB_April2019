@@ -47,3 +47,40 @@ def plot_xarray(xarr, figure_name = None,figsize_x=8,figsize_y=6,vmin=None,
     if show:
         fig.show()
     return fig,axis
+
+"""
+plot_AGBobs_and_AGBpot
+-------------------------
+plot observed and predicted AGB
+"""
+def plot_AGBobs_and_AGBpot(agb,agbpot,cmap='viridis',vmin=None,vmax=None,show=True):
+
+    # Deal with colour limits for color ramp
+    if vmin is None:
+        vmin = np.nanmin(agb.values)
+    if vmax is None:
+        vmax =np.nanmax(agb.values)
+    extend = 'neither'
+    if vmin > np.nanmin(agb.values):
+        if vmax < np.nanmax(agb.values):
+            extend = 'both'
+        else:
+            extend = 'min'
+    else:
+        if vmax < np.nanmax(agb.values):
+            extend = 'max'
+
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10,6))
+    agb.plot(ax=axes[0], vmin=vmin, vmax=vmax, cmap=cmap, add_colorbar=True,
+                        extend=extend, cbar_kwargs={'label': 'AGB / Mg ha$^{-1}$',
+                        'orientation':'horizontal'})
+    agbpot.plot(ax=axes[1], vmin=vmin, vmax=vmax, cmap=cmap, add_colorbar=True,
+                        extend=extend, cbar_kwargs={'label': 'AGB$_{pot}$ / Mg ha$^{-1}$',
+                        'orientation':'horizontal'})
+    for ax in axes:
+        ax.set_aspect("equal")
+    axes[0].set_title("Observed AGB")
+    axes[1].set_title("Modelled potential AGB")
+    if show:
+        fig.show()
+    return fig,axes
