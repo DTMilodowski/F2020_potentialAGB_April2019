@@ -48,6 +48,14 @@ def load_geotiff(filename, band = 1,x_name='longitude',y_name='latitude',option=
     return xarr #return the xarray object
 
 """
+copy_xarray_template
+"""
+def copy_xarray_template(xarr):
+    xarr_new = xarr.copy()
+    xarr_new.values = np.zeros(xarr.values.shape)*np.nan
+    return xarr_new
+
+"""
 load_predictors
 This function loads all of the datasets containign the explanatory variables,
 and applies a mask so that only land areas are considered, and any nodata values
