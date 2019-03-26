@@ -148,3 +148,11 @@ agbpot_difference.values = agbpot_scenario.values - agbpot.values
 
 # Then we plot up both maps for comparison
 fig, axes = mplt.plot_AGBpot_scenario(agbpot,agbpot_scenario,agbpot_difference,scenario_name)
+
+"""
+IMPORTANT CAVEAT!!!
+Note that the above simulation uses the climate forecast for only one climate
+model within the CMIP5 ensemble. This therefore serves as an exercise only, and
+more detailed investigation is required - including analysis of scenario
+forecasts from other models - before any serious conclusions could be drawn.
+"""
