@@ -44,17 +44,21 @@ sys.path.append('./data_visualisation/')
 
 import data_io as io
 import set_training_areas as training_areas
-import map_figures as mfig
+import map_plots as mplt
 
 """
 #===============================================================================
 PART A: FIT POTENTIAL BIOMASS MODEL
 This is a bit of a repeat from before again, but useful as a reminder.
 Fits random forest regression models to estimate potential biomass stocks.
+Note that the climate change scenarios were produced using an earlier WorldClim
+version (WorldClim 1.4 rather than WorldClim2) so we need to refit our random
+forest model against this earlier version of the climatology. Otherwise we may
+get some spurious results!
 #-------------------------------------------------------------------------------
 """
 # First of all, let's load in some data again
-predictors,AGB,landmask,labels=io.load_predictors()
+predictors,AGB,landmask,labels=io.load_predictors(worldclim_version=1.4)
 
 # Now create the training set
 # First create training mask based on Hinterland Forest Landscapes mapped by
@@ -97,10 +101,9 @@ AGBpot = rf.predict(predictors)
 #===============================================================================
 PART B: FIT CLIMATE CHANGE SCENARIO
 Now load in new set of predictors, this time using the climate change scenarios
-from WorldClim, rather than the regular climatologymodels we have been using
 #-------------------------------------------------------------------------------
 """
-scenario_name = 'rcp85' # choices are rcp26, rcp45, rcp60, rcp85
+scenario_name = 'rcp45' # choices are rcp26, rcp45, rcp60, rcp85
 predictors_scenario,AGB,scenariomask,labels= io.load_predictors_scenarios(scenario_name)
 # predict using rf model
 AGBpot_scenario = rf.predict(predictors_scenario)
@@ -130,39 +133,36 @@ Nature Scientific Reports: https://www.nature.com/articles/s41598-017-15788-6
 """
 # As before, we'll load in an existing dataset to get the georeferencing information
 agb_file = '../data/agb/colombia_Avitabile_AGB_2km.tif' # the agb file
-
-# open file and store data in an xarray called agb
-agb_ds = xr.open_rasterio(agb_file)
-agb = agb_ds.sel(band=1)
-
-# rename coordinates to latitude and longitude
-agb = agb.rename(x='longitude',y='latitude')
-agb.values[agb.values<0]=np.nan
+agb = io.load_geotiff(agb_file,option=1)
 
 #let's copy to a new xarray for AGBpot
-agbpot = agb.copy()
-agbpot.values = np.zeros(landmask.shape)*np.nan
+agbpot = io.copy_xarray_template(agb)
 agbpot.values[landmask] = AGBpot.copy()
 
 #now do the same for the scenario
-agbpot_scenario = agb.copy()
-agbpot_scenario.values = np.zeros(landmask.shape)*np.nan
+agbpot_scenario = io.copy_xarray_template(agb)
 agbpot_scenario.values[scenariomask] = AGBpot_scenario.copy()
 
 #now do the same for the potential difference
-agbpot_difference = agb.copy()
+agbpot_difference = io.copy_xarray_template(agb)
 agbpot_difference.values = agbpot_scenario.values - agbpot.values
 
 # Then we plot up both maps for comparison
-fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10,6))
-agbpot_scenario.plot(ax=axes[0], vmin=0, vmax=400, cmap='viridis', add_colorbar=True,
+fig, axes = mplt.plot_AGBpot_scenario(agbpot,agbpot_scenario,agbpot_difference,scenario_name)
+plt.subplots(nrows=1, ncols=3, figsize=(10,6))
+agbpot.plot(ax=axes[0], vmin=0, vmax=400, cmap='viridis', add_colorbar=True,
                     extend='max', cbar_kwargs={'label': 'AGB$_{pot}$  / Mg ha$^{-1}$',
                     'orientation':'horizontal'})
-agbpot_difference.plot(ax=axes[1], vmin=-100, vmax=100, cmap='bwr_r', add_colorbar=True,
+agbpot_scenario.plot(ax=axes[1], vmin=0, vmax=400, cmap='viridis', add_colorbar=True,
+                    extend='max', cbar_kwargs={'label': 'AGB$_{pot}$  / Mg ha$^{-1}$',
+                    'orientation':'horizontal'})
+agbpot_difference.plot(ax=axes[2], vmin=-200, vmax=200, cmap='bwr_r', add_colorbar=True,
                     extend='both', cbar_kwargs={'label': 'difference in AGB$_{pot}$ / Mg ha$^{-1}$',
                     'orientation':'horizontal'})
 for ax in axes:
     ax.set_aspect("equal")
-axes[0].set_title("Potential AGB in 2070\nunder %s" % scenario_name)
-axes[1].set_title("Difference in potential AGB\nunder %s" % scenario_name)
-plt.show()
+axes[0].set_title("Potential AGB")
+axes[1].set_title("Potential AGB in 2070 under %s" % scenario_name)
+axes[2].set_title("Difference in potential AGB under %s" % scenario_name)
+fig.tight_layout()
+fig.show()
