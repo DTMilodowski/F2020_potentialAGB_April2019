@@ -47,7 +47,7 @@ sys.path.append('./eolab/')
 
 import data_io as io
 import set_training_areas as training_areas
-import map_figures as mfig
+import map_plots as mplt
 import prepare_EOlab_layers as eo
 
 """
@@ -92,7 +92,7 @@ rf = RandomForestRegressor(bootstrap=True,
 # fit the model
 rf.fit(X,y)
 cal_score = rf.score(X,y) # calculate coefficeint of determination R^2 of the calibration
-print("Calibration R$^2$ = %.02f" % cal_score)
+print("Calibration R^2 = %.02f" % cal_score)
 
 # Now the model has been fitted, we will predict the potential AGB across the
 # full dataset
@@ -100,34 +100,15 @@ AGBpot = rf.predict(predictors)
 
 # Now lets plot this onto a map
 # We'll load in an existing dataset to get the georeferencing information
-agb_file = '../data/agb/colombia_Avitabile_AGB_2km.tif' # the agb file
-
-# open file and store data in an xarray called agb
-agb_ds = xr.open_rasterio(agb_file)
-agb = agb_ds.sel(band=1)
-
-# rename coordinates to latitude and longitude
-agb = agb.rename(x='longitude',y='latitude')
-agb.values[agb.values<0]=np.nan
+agb_file = '../data/agb/colombia_Avitabile_AGB_2km.tif'
+agb = io.load_geotiff(agb_file,option=1)
 
 #let's copy to a new xarray for AGBpot
-agbpot = agb.copy()
-agbpot.values = np.zeros(landmask.shape)*np.nan
+agbpot= io.copy_xarray_template(agb)
 agbpot.values[landmask] = AGBpot.copy()
 
 # Then we plot up both maps for comparison
-fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10,6))
-agb.plot(ax=axes[0], vmin=0, vmax=400, cmap='viridis', add_colorbar=True,
-                    extend='max', cbar_kwargs={'label': 'AGB / Mg ha$^{-1}$',
-                    'orientation':'horizontal'})
-agbpot.plot(ax=axes[1], vmin=0, vmax=400, cmap='viridis', add_colorbar=True,
-                    extend='max', cbar_kwargs={'label': 'AGB$_{pot}$ / Mg ha$^{-1}$',
-                    'orientation':'horizontal'})
-for ax in axes:
-    ax.set_aspect("equal")
-axes[0].set_title("Observed AGB")
-axes[1].set_title("Modelled potential AGB")
-plt.show()
+fig,axes = mplt.plot_AGBobs_and_AGBpot(agb,agbpot,vmin=0,vmax=400)
 
 """
 #===============================================================================
