@@ -26,6 +26,7 @@ interested, you are welcome to browse this at your leisure.
 """
 import numpy as np                  # standard package for scientific computing
 import xarray as xr                 # xarray geospatial package
+import pandas as pd                 # data frames
 import matplotlib.pyplot as plt     # plotting package
 import seaborn as sns               # another useful plotting package
 #sns.set()                           # set some nice default plotting options
@@ -63,7 +64,7 @@ A toy example; comparing random forest regression and linear regression models
 X1,y1,X2,y2,X3,y3 = util.generate_simple_test_data()
 
 # Let's just plot up these trial datsets so we can see what we are dealing with
-fig1,axes=gplot.plot_test_data(X1,y1,X2,y2,X3,y3)
+fig1,axes=gplt.plot_test_data(X1,y1,X2,y2,X3,y3)
 
 # Now lets fit a very simple random forest regression model to this data
 X1=X1.reshape(-1, 1)
@@ -72,9 +73,9 @@ X3=X3.reshape(-1, 1)
 X_test = np.arange(0,10,0.1).reshape(-1, 1)
 
 rf1 = RandomForestRegressor()
-rf1.fit(X,y1)
+rf1.fit(X1,y1)
 rf2 = RandomForestRegressor()
-rf2.fit(X,y2)
+rf2.fit(X2,y2)
 rf3 = RandomForestRegressor()
 rf3.fit(X3,y3)
 y1_test = rf1.predict(X_test)
@@ -84,14 +85,14 @@ y3_test = rf3.predict(X_test)
 # for comparison, plot linear regression for cases 1 and 3
 lm1 = LinearRegression()
 lm3 = LinearRegression()
-lm1.fit(X,y1)
+lm1.fit(X1,y1)
 lm3.fit(X3,y3)
 y1_test_lm = lm1.predict(X_test)
 y3_test_lm = lm3.predict(X_test)
 
 # and plot the results
 fig2,axes = gplt.plot_test_data_with_regression_results(X1,y1,X2,y2,X3,y3,X_test,
-                        y1_test,y1_test_lm,y2_test,y3_test,y3_test_lm,show=True):
+                        y1_test,y1_test_lm,y2_test,y3_test,y3_test_lm)
 
 # You should see that there are the following features
 # 1) Able to fit complex non-linear functions, without specifying functional
@@ -126,15 +127,15 @@ rf = RandomForestRegressor()
 rf.fit(X_train,y_train)
 y_train_rf = rf.predict(X_train)
 cal_score = rf.score(X_train,y_train) # calculate coefficeint of determination R^2 of the calibration
-print("Calibration R$^2$ = %.02f" % cal_score)
+print("Calibration R^2 = %.02f" % cal_score)
 # now test the validation sample
 y_test_rf = rf.predict(X_test)
 val_score = rf.score(X_test,y_test)
-print("Validation R$^2$ = %.02f" % val_score)
+print("Validation R^2 = %.02f" % val_score)
 
 # Plot the calibration and validation data
 # - First put observations and model values into dataframe for easy plotting with seaborn functions
-fig3,axes=gplot.plot_cal_val(y_train,y_train_rf,y_test,y_test_rf)
+fig3,axes=gplt.plot_cal_val(y_train,y_train_rf,y_test,y_test_rf)
 
 # If you like, you can try to tweak the random forest hyperparameters to see if
 # the overfiting can be reduced.
@@ -156,8 +157,7 @@ rf = RandomForestRegressor(bootstrap=True,
             n_jobs=-1,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=None,         # seed used by the random number generator
-            verbose=0,
-            wa_start=False)
+            verbose=0)
 
 # To do this properly would obviously be very time consuming and tedious.
 # scikit-learn have programmed automatic routines to search through the
@@ -173,7 +173,10 @@ Fit random forest regression models to estimate potential biomass stocks.
 Calibrate and validate potential biomass models
 #-------------------------------------------------------------------------------
 """
-# First of all, let's load in some data again
+# First of all, let's load in some data again. This function loads in the full
+# climatology dataset and soil texture/depths data into a big array (predictors)
+# as well as the AGB data, a mask of land vs. sea, and a set of labels to
+# identify the predictor variables a bit later
 predictors,AGB,landmask,labels=io.load_predictors()
 
 # Now create the training set
@@ -185,6 +188,9 @@ training_mask= training_areas.set()
 # Now subset the predictors and AGB data according to this training mask
 X = predictors[training_mask[landmask]]
 y = AGB[training_mask[landmask]]
+
+# Let's just check the dimensions. X should be a 2D array with a column for
+# each predictor variable and a row for each pixel in the training set
 
 # Split the training data into a calibration and validation set using the scikit learn tool
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, test_size=0.25)
@@ -204,49 +210,22 @@ rf = RandomForestRegressor(bootstrap=True,
             n_jobs=-1,                 # The number of jobs to run in parallel for both fit and predict
             oob_score=True,            # use out-of-bag samples to estimate the R^2 on unseen data
             random_state=None,         # seed used by the random number generator
-            verbose=0,
-            wa_start=False)
+            verbose=0)
 
 # fit the calibration sample
 rf.fit(X_train,y_train)
 y_train_rf = rf.predict(X_train)
 cal_score = rf.score(X_train,y_train) # calculate coefficeint of determination R^2 of the calibration
-print("Calibration R$^2$ = %.02f" % cal_score)
+print("Calibration R^2 = %.02f" % cal_score)
 
 # fit the validation sample
 y_test_rf = rf.predict(X_test)
 val_score = rf.score(X_test,y_test)
-print("Validation R$^2$ = %.02f" % val_score)
+print("Validation R^2 = %.02f" % val_score)
 
 # Plot the calibration and validation data
 # - First put observations and model values into dataframe for easy plotting with seaborn functions
-cal_df = pd.DataFrame(data = {'cal_obs': y_train,
-                              'cal_model': y_train_rf})
-val_df = pd.DataFrame(data = {'val_obs': y_test,
-                              'val_model': y_test_rf})
-
-
-fig4,axes= plt.subplots(nrows=1,ncols=2,figsize=[8,4])
-sns.regplot(x='cal_obs',y='cal_model',data=cal_df,marker='.',
-            truncate=True,ci=None,ax=axes[0],
-            scatter_kws={'alpha':0.01,'edgecolor':'none'},
-            line_kws={'color':'k'})
-axes[0].annotate('calibration R$^2$ = %.02f\nRMSE = %.02f' %
-            (cal_score,np.sqrt(mean_squared_error(y_train,y_train_rf))),
-            xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',
-            horizontalalignment='left', verticalalignment='top')
-sns.regplot(x='val_obs',y='val_model',data=val_df,marker='.',
-            truncate=True,ci=None,ax=axes[1],
-            scatter_kws={'alpha':0.01,'edgecolor':'none'},
-            line_kws={'color':'k'})
-axes[1].annotate('validation R$^2$ = %.02f\nRMSE = %.02f'
-            % (val_score,np.sqrt(mean_squared_error(y_test,y_test_rf))),
-            xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',
-            horizontalalignment='left', verticalalignment='top')
-axes[0].axis('equal')
-axes[1].axis('equal')
-fig4.tight_layout()
-fig4.show()
+fig4,axes = gplt.plot_cal_val_agb(y_train,y_train_rf,y_test,y_test_rf)
 
 """
 #===============================================================================
@@ -285,19 +264,8 @@ imp_df = pd.DataFrame(data = {'variable': labels,
                               'permutation_importance': perm.feature_importances_,
                               'gini_importance': rf.feature_importances_})
 
-fig5,axes= plt.subplots(nrows=1,ncols=2,figsize=[8,8],sharex=True)
-sns.barplot(x='permutation_importance',y='variable',data=imp_df,ax=axes[0])
-axes[0].annotate('permutation importance',
-            xy=(0.95,0.98), xycoords='axes fraction',backgroundcolor='none',
-            horizontalalignment='right', verticalalignment='top')
-sns.barplot(x='gini_importance',y='variable',data=imp_df,ax=axes[1])
-axes[1].annotate('gini importance',
-            xy=(0.95,0.98), xycoords='axes fraction',backgroundcolor='none',
-            horizontalalignment='right', verticalalignment='top')
-plt.setp(axes[1].get_yticklabels(),visible=False)
-axes[1].yaxis.set_ticks_position('left')
-fig5.tight_layout()
-fig5.show()
+# plot up the results
+gplt.plot_importances(imp_df)
 
 """
 #===============================================================================
@@ -315,26 +283,10 @@ fig5.show()
 # fitting the model across the range of the variable of interest. We'll try
 # this now.
 """
-# Variable in position 11 (WClim2_12) exhibited the strongest importance, so
-# we'll try with this first
-n_variables=X.shape[1]
-var_ = np.linspace(np.min(X[:,11]),np.max(X[:,11])+1,200)
-X_RM = np.zeros((var_.size,n_variables))
-for i in range(0,n_variables):
-    if i == 11:
-        X_RM[:,i] = var_.copy()
-    else:
-        X_RM[:,i] = np.mean(X[:,i])
-
-# predict with rf model
-y_RM = rf.predict(X_RM)
-# now plot
-fig6,ax = plt.subplots(figsize=[8,5])
-ax.plot(var_, y_RM,'-')
-ax.set_xlabel(labels[11])
-ax.set_ylabel("AGB / Mg ha$^{-1}$")
-fig6.tight_layout()
-fig6.show()
+# Variable in position 11 (WClim2_12; precipitation) exhibited the strongest
+# importance, so we'll try with this first
+fig6,axis=gplt.plot_partial_dependencies_simple(rf,X,x_label = 'precipitation / mm',
+                                    y_label = "AGB / Mg ha$^{-1}$", variable_position=11)
 
 # Really we would want to plot a number of lines for different combinations of
 # the other explanatory variables, rather than just the average, since the
@@ -342,26 +294,7 @@ fig6.show()
 # quite different!)
 
 # Lets do that quickly now
-fig7,ax = plt.subplots(figsize=[8,5])
+gplt.add_partial_dependency_instance(axis,rf,X,variable_position=11)
+plt.draw() # if your figure doesn't automatically update, you need this command
 
-N_iterations = 20
-for i in range(0,N_iterations):
-    sample_row = np.random.randint(0,X.shape[0]+1)
-    X_i = np.zeros((var_.size,n_variables))
-    for j in range(0,n_variables):
-        if j == 11:
-            X_i[:,j] = _.copy()
-        else:
-            X_i[:,j] = (X[sample_row,j])
-
-    # predict with rf model
-    y_i = rf.predict(X_i)
-    ax.plot(var_, y_i,'-',c='0.5',linewidth=0.5,alpha=0.8)
-
-ax.plot(var_, y_RM,'-') # also plot line from before for comparison
-ax.set_xlabel(labels[11])
-ax.set_ylabel("AGB / Mg ha$^{-1}$")
-fig7.tight_layout()
-fig7.show()
-
-# If you like, you could try this for another variable to see how they look
+# If you like, you could try this for another variable to see how they compare
