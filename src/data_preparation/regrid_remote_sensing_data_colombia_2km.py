@@ -48,7 +48,7 @@ for ff,fname in enumerate(wc2files):
         wc2vars.append(variable)
         wc2subset.append(fname)
         os.system("gdalwarp -overwrite -te %f %f %f %f -tr %f -%f -r average  %s\
-                    ../data/climatology/worldclim2/colombia_%s_2km.tif" % (W,S,E,N,res,res,wc2files[ff],outfname))
+                    ../../data/climatology/worldclim2/colombia_%s_2km.tif" % (W,S,E,N,res,res,wc2files[ff],outfname))
 
 # Soilgrids next. Soilgrids are downloaded as geotiffs. Resolution is identical to worldclim, so regridding process is the same
 sgdir = '/disk/scratch/local.2/soilgrids/1km/'
@@ -60,15 +60,15 @@ for ff,fname in enumerate(sgfiles):
     outfname = fname.split('/')[-1][:-11]
     sgvars.append(variable)
     sgsubset.append(fname)
-    os.system("gdalwarp -overwrite -te %f %f %f %f -tr %f -%f -r average %s ../data/soils/colombia_%s_2km.tif" % (W,S,E,N,res,res,sgfiles[ff],outfname))
+    os.system("gdalwarp -overwrite -te %f %f %f %f -tr %f -%f -r average %s ../../data/soils/colombia_%s_2km.tif" % (W,S,E,N,res,res,sgfiles[ff],outfname))
 
 # Aboveground Biomass - Avitabile map - 1 km resolution so same gdal example should be sufficient
 agbfiles= ['/home/dmilodow/DataStore_GCEL/AGB/avitabile/Avitabile_AGB_Map/Avitabile_AGB_Map.tif','/home/dmilodow/DataStore_GCEL/AGB/avitabile/Avitabile_AGB_Uncertainty/Avitabile_AGB_Uncertainty.tif']
 agbvars = ['Avitabile_AGB','Avitabile_AGB_Uncertainty']
 os.system("gdalwarp -overwrite -te %f %f %f %f -tr %f -%f -r average  %s\
-            ../data/agb/colombia_%s_2km.tif" % (W,S,E,N,res,res,agbfiles[0],agbvars[0]))
+            ../../data/agb/colombia_%s_2km.tif" % (W,S,E,N,res,res,agbfiles[0],agbvars[0]))
 os.system("gdalwarp -overwrite -te %f %f %f %f -tr %f -%f -r average  %s\
-            ../data/agb/colombia_%s_2km.tif" % (W,S,E,N,res,res,agbfiles[1],agbvars[1]))
+            ../../data/agb/colombia_%s_2km.tif" % (W,S,E,N,res,res,agbfiles[1],agbvars[1]))
 
 # ESA CCI landcover - the original resolution of these rasters is higher than the reference data, so this needs to be regridded. The mode landcover class will be used.
 # Note that the ESA CCI landcover data are originally in netcdf format.
@@ -77,12 +77,12 @@ lcfiles = glob.glob('%s*.nc' % lcdir);lcfiles.sort()
 for ff,fname in enumerate(lcfiles):
     outfname = fname.split('/')[-1][:22]+fname.split('/')[-1][27:42]+"-2km-mode-lccs-class"
     os.system("gdalwarp -overwrite -te %f %f %f %f -tr %f -%f -r mode -of GTIFF\
-                NETCDF:%s:lccs_class ../data/landcover/colombia-%s_2km.tif" % (W,S,E,N,res,res,lcfiles[ff],outfname))
+                NETCDF:%s:lccs_class ../../data/landcover/colombia-%s_2km.tif" % (W,S,E,N,res,res,lcfiles[ff],outfname))
 
 # Hinterland forest landscapes (Potapov et al.)
 hfl_file = '/disk/scratch/local.2/global_hinterland_forests/source_files/SAM_2013hinterland_25vcf.tif'
 os.system("gdalwarp -overwrite -te %f %f %f %f -dstnodata -9999  -tr %f -%f\
-            -r mode -of GTIFF %s ../data/landcover/colombia_HFL_2013_2km.tif" % (W,S,E,N,res,res,hfl_file))
+            -r mode -of GTIFF %s ../../data/landcover/colombia_HFL_2013_2km.tif" % (W,S,E,N,res,res,hfl_file))
 
 
 # WORLDCLIM scenarios
@@ -97,7 +97,7 @@ for rcp in rcps:
         outfname = temp[:6]+'_'+temp[-2:]
         wcsubset.append(fname)
         os.system("gdalwarp -overwrite -te %f %f %f %f -tr %f -%f -r average  %s\
-                    ../data/scenarios/rcp%s/colombia_%s_2km.tif" % (W,S,E,N,res,res,wcfiles[ff],rcp,outfname))
+                    ../../data/scenarios/rcp%s/colombia_%s_2km.tif" % (W,S,E,N,res,res,wcfiles[ff],rcp,outfname))
 
 # WORLDCLIM 1.4
 wcfiles = glob.glob('%s/current/bio*.bil' % wcdir);wcfiles.sort()
@@ -106,4 +106,4 @@ for ff,fname in enumerate(wcfiles):
     variable = fname.split('/')[-1].split('.')[0]
     wcsubset.append(fname)
     os.system("gdalwarp -overwrite -te %f %f %f %f -tr %f -%f -r average  %s\
-                    ../data/climatology/worldclim1_4/colombia_%s_2km.tif" % (W,S,E,N,res,res,wcfiles[ff],variable))
+                    ../../data/climatology/worldclim1_4/colombia_%s_2km.tif" % (W,S,E,N,res,res,wcfiles[ff],variable))
