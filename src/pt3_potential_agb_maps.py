@@ -124,7 +124,7 @@ agbdef.values = agbpot.values-agb.values
 fig2,axis=mplt.plot_xarray(agbdef,vmin=-200, vmax=200, cmap='bwr_r', add_colorbar=True,
                     cbar_kwargs={'label': 'AGB$_{def}$ / Mg ha$^{-1}$',
                     'orientation':'horizontal'})
-                    
+
 """
 #===============================================================================
 PART C: PRODUCING EO LABORATORY LAYERS
@@ -135,7 +135,7 @@ output_prefix = '../EOlab_layers/F2020_workshop_AGBpot' # a prefix for your outp
 cmap = 'viridis' # the colormap you want to use
 ulim=400 # the upper limit of the colormap
 llim=0 # the lower limit of the colormap
-colorbar_label = 'AGB$_{potential}$ / Mg ha$^{-1}$' # the lael for the colorbar
+colorbar_label = 'AGB$_{potential}$ / Mg ha$^{-1}$' # the label for the colorbar
 # Note that writing a display layer automatically creates the corresponding
 # data layer
 eo.write_array_to_display_layer_GeoTiff(agbpot,output_prefix,cmap,ulim,llim)
