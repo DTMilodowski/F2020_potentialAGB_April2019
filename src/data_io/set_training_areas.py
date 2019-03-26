@@ -38,4 +38,8 @@ def set(path2root='../',subset=1):
         hfl = xr.open_rasterio(glob.glob('%s/data/landcover/*HFL*tif' % path2root)[0]).values[0]
         training_mask=(hfl==1)
 
+    # subset 3: a bespoke dataset for the workshop
+    elif subset == 3:
+        training = xr.open_rasterio(glob.glob('%s/data/training/*tif' % path2root)[0]).values[0]
+        training_mask=(training>0)
     return training_mask
