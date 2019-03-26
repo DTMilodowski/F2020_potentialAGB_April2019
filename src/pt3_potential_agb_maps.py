@@ -65,7 +65,7 @@ predictors,AGB,landmask,labels=io.load_predictors()
 # First create training mask based on Hinterland Forest Landscapes mapped by
 # Tyukavina et al (2015, Global Ecology and Biogeography) and stable non-forest
 # (natural) classes from ESA CCI land cover dataset
-training_mask= training_areas.set()
+training_mask= training_areas.set(subset=3)
 
 # Now subset the predictors and AGB data according to this training mask
 X = predictors[training_mask[landmask]]
