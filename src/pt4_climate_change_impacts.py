@@ -149,20 +149,3 @@ agbpot_difference.values = agbpot_scenario.values - agbpot.values
 
 # Then we plot up both maps for comparison
 fig, axes = mplt.plot_AGBpot_scenario(agbpot,agbpot_scenario,agbpot_difference,scenario_name)
-plt.subplots(nrows=1, ncols=3, figsize=(10,6))
-agbpot.plot(ax=axes[0], vmin=0, vmax=400, cmap='viridis', add_colorbar=True,
-                    extend='max', cbar_kwargs={'label': 'AGB$_{pot}$  / Mg ha$^{-1}$',
-                    'orientation':'horizontal'})
-agbpot_scenario.plot(ax=axes[1], vmin=0, vmax=400, cmap='viridis', add_colorbar=True,
-                    extend='max', cbar_kwargs={'label': 'AGB$_{pot}$  / Mg ha$^{-1}$',
-                    'orientation':'horizontal'})
-agbpot_difference.plot(ax=axes[2], vmin=-200, vmax=200, cmap='bwr_r', add_colorbar=True,
-                    extend='both', cbar_kwargs={'label': 'difference in AGB$_{pot}$ / Mg ha$^{-1}$',
-                    'orientation':'horizontal'})
-for ax in axes:
-    ax.set_aspect("equal")
-axes[0].set_title("Potential AGB")
-axes[1].set_title("Potential AGB in 2070 under %s" % scenario_name)
-axes[2].set_title("Difference in potential AGB under %s" % scenario_name)
-fig.tight_layout()
-fig.show()
