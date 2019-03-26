@@ -99,7 +99,7 @@ def plot_AGBpot_scenario(agbpot,agbpot_scenario,agbpot_difference,scenario_name,
     agbpot_scenario.plot(ax=axes[1], vmin=0, vmax=400, cmap='viridis', add_colorbar=True,
                         extend='max', cbar_kwargs={'label': 'AGB$_{pot}$  / Mg ha$^{-1}$',
                         'orientation':'horizontal'})
-    agbpot_difference.plot(ax=axes[2], vmin=-200, vmax=200, cmap='bwr_r', add_colorbar=True,
+    agbpot_difference.plot(ax=axes[2], vmin=-300, vmax=300, cmap='bwr_r', add_colorbar=True,
                         extend='both', cbar_kwargs={'label': 'difference in AGB$_{pot}$ / Mg ha$^{-1}$',
                         'orientation':'horizontal'})
     for ax in axes:

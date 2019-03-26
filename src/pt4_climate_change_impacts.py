@@ -103,11 +103,10 @@ PART B: FIT CLIMATE CHANGE SCENARIO
 Now load in new set of predictors, this time using the climate change scenarios
 #-------------------------------------------------------------------------------
 """
-scenario_name = 'rcp45' # choices are rcp26, rcp45, rcp60, rcp85
+scenario_name = 'rcp26' # choices are rcp26, rcp45, rcp60, rcp85
 predictors_scenario,AGB,scenariomask,labels= io.load_predictors_scenarios(scenario_name)
 # predict using rf model
 AGBpot_scenario = rf.predict(predictors_scenario)
-
 """
 #===============================================================================
 PART C: PLOT POTENTIAL BIOMASS UNDER FUTURE CLIMATE SCENARIO
