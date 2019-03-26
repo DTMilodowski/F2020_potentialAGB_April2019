@@ -297,4 +297,9 @@ fig6,axis=gplt.plot_partial_dependencies_simple(rf,X,x_label = 'precipitation / 
 gplt.add_partial_dependency_instance(axis,rf,X,variable_position=11)
 plt.draw() # if your figure doesn't automatically update, you need this command
 
+# It's worth doing this for a few more instances to build up a picture of the
+# variability underlying the functional relationship between the individual
+# predictor variable and the target variable
+
+
 # If you like, you could try this for another variable to see how they compare
