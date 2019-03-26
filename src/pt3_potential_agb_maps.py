@@ -108,7 +108,7 @@ agbpot= io.copy_xarray_template(agb)
 agbpot.values[landmask] = AGBpot.copy()
 
 # Then we plot up both maps for comparison
-fig,axes = mplt.plot_AGBobs_and_AGBpot(agb,agbpot,vmin=0,vmax=400)
+fig1,axes = mplt.plot_AGBobs_and_AGBpot(agb,agbpot,vmin=0,vmax=400)
 
 """
 #===============================================================================
@@ -118,18 +118,13 @@ straightforward to add and subtract xarrays
 #-------------------------------------------------------------------------------
 """
 #let's copy to a new xarray for AGBdef (the deficit)
-agbdef = agb.copy()
+agbdef = io.copy_xarray_template(agb)
 agbdef.values = agbpot.values-agb.values
 
-fig, axis = plt.subplots(nrows=1, ncols=1, figsize=(6,6))
-agbdef.plot(ax=axis, vmin=-200, vmax=200, cmap='bwr_r', add_colorbar=True,
-                    extend='both', cbar_kwargs={'label': 'AGB$_{def}$ / Mg ha$^{-1}$',
+fig2,axis=mplt.plot_xarray(agbdef,vmin=-200, vmax=200, cmap='bwr_r', add_colorbar=True,
+                    cbar_kwargs={'label': 'AGB$_{def}$ / Mg ha$^{-1}$',
                     'orientation':'horizontal'})
-axis.set_aspect("equal")
-axis.set_title("AGB deficit")
-plt.show()
-
-
+                    
 """
 #===============================================================================
 PART C: PRODUCING EO LABORATORY LAYERS
