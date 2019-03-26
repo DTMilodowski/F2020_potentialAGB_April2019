@@ -107,3 +107,8 @@ for ff,fname in enumerate(wcfiles):
     wcsubset.append(fname)
     os.system("gdalwarp -overwrite -te %f %f %f %f -tr %f -%f -r average  %s\
                     ../../data/climatology/worldclim1_4/colombia_%s_2km.tif" % (W,S,E,N,res,res,wcfiles[ff],variable))
+
+# Bespoke training set
+file = '/home/dmilodow/DataStore_DTM/FOREST2020/PotentialBiomassRFR/output/COL_003_AGB_potential_RFR_worldclim_soilgrids.nc'
+os.system("gdalwarp -overwrite -te %f %f %f %f -tr %f -%f -r mode -of GTIFF\
+                NETCDF:%s:trainset3 ../../data/training/colombia_trainset_2km.tif" % (W,S,E,N,res,res,file))
